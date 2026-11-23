@@ -1,0 +1,33 @@
+name: build-rdna4fb
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Toolchain info
+        run: |
+          sw_vers
+          xcodebuild -version
+          clang --version
+
+      - name: Build kext
+        run: make SDK="$(xcrun --sdk macosx --show-sdk-path)"
+
+      - name: Inspect result
+        run: |
+          ls -la build/RDNA4FB.kext/Contents/MacOS/
+          file build/RDNA4FB.kext/Contents/MacOS/RDNA4FB || true
+          otool -hv build/RDNA4FB.kext/Contents/MacOS/RDNA4FB | head -6 || true
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RDNA4FB-kext
+          path: build/RDNA4FB.kext
